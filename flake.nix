@@ -2,31 +2,36 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-24.05-darwin";
     flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-      };
-    };
   };
   outputs = {
+    self,
     nixpkgs,
     flake-utils,
-    rust-overlay,
-    ...
   }:
     flake-utils.lib.eachDefaultSystem
     (
       system: let
-        overlays = [(import rust-overlay)];
+        overlays = [
+          (final: prev: {
+            pythonEnv = prev.python3.withPackages (ps: []);
+          })
+        ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
       in
         with pkgs; {
           devShells.default = mkShell {
-            buildInputs = [rust-bin.stable.latest.default];
+            buildInputs = [
+              pythonEnv
+            ];
+            shellHook = ''
+              VENV=.venv
+              if test ! -d $VENV; then
+                python -m venv $VENV
+              fi
+              source ./$VENV/bin/activate
+            '';
           };
         }
     );
