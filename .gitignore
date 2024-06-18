@@ -3,3 +3,6 @@
 
 # Python
 /.venv/
+
+# Other
+/contacts.db
